@@ -1,0 +1,12 @@
+# Temporary / binary files
+*.py[cod]
+__pycache__/*
+
+# Distribution / packaging
+.egg
+.eggs/
+build/
+dist/
+sdist/
+*.egg-info/
+*.egg
