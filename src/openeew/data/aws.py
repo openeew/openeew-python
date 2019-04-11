@@ -87,7 +87,7 @@ class AwsDataClient(object):
     def _get_device_ids_from_records(self):
         # Returns a list of all devices (device_id) that have records
 
-        paginator = self.s3_client.get_paginator('list_objects_v2')
+        paginator = self._s3_client.get_paginator('list_objects_v2')
 
         pages = paginator.paginate(
                 Bucket=AwsDataClient._S3_BUCKET_NAME,
