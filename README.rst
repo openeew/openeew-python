@@ -19,43 +19,49 @@ The library can be installed using ``pip`` (it should correspond to Python 3.4 o
 
 Usage
 ===========
-Here is an example of how the library can be used to download data for a chosen date range::
+Here is an example of how the library can be used to download data for a chosen date range.
+
+First import the ``AwsDataClient`` class::
 
   from openeew.data.aws import AwsDataClient
   
-  # Initialize a data client, specifying the required country
-  # Options are 'mx' for Mexico and 'cl' for Chile
+We initialize a data client object by specifying the required country, either ``mx`` for Mexico or ``cl`` for Chile::
+
   data_client = AwsDataClient('mx')
-  
-  # Get a list of current devices
+
+To get a list of current devices::
+
   devices = data_client.get_current_devices()
   
-  # Choose UTC date range of interest:
+To get data for a specific (UTC) date range, first specify the start and end dates::
+
   start_date_utc = '2018-02-16 23:39:00'
   end_date_utc = '2018-02-16 23:42:00'
   
-  # Get data from all devices for
-  # the chosen UTC date range
+Then call the ``get_filtered_records`` method::
+
   records = data_client.get_filtered_records(
     start_date_utc,
     end_date_utc
     )
     
-  # We can also get the data as a pandas.DataFrame
+We can also get the data as a pandas.DataFrame::
+
   records_df = data_client.get_filtered_records_df(
     start_date_utc,
     end_date_utc
     )
     
-  # It is also possible to specify a list of device IDs
+It is also possible to specify a list of device IDs::
+
   records = data_client.get_filtered_records(
     start_date_utc,
     end_date_utc,
     ['001', '008'] # optional list of device IDs
     )
     
-  # Now we can change the country if we want
-  # to download Chile data
+We can change the country if we want. So if we now want to look at Chile data::
+
   data_client.country_code = 'cl'
 
 Contributing
