@@ -8,9 +8,7 @@ The OpenEEW library for Python (versions 3.4 and above) will contain a collectio
 * sensor firmware
 * detection algorithms
 
-Currently it provides a client to simplify downloading data held as an `AWS Public Dataset <https://registry.opendata.aws/grillo-openeew/>`_.
-See 
-More features will be coming soon.
+Currently it provides a client to simplify downloading data held as an `AWS Public Dataset <https://registry.opendata.aws/grillo-openeew/>`_. More features will be coming soon.
 
 Installation
 ===========
