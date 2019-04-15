@@ -25,6 +25,10 @@ from botocore.client import Config
 
 
 class AwsDataClient(object):
+    """
+    A client for downloading OpenEEW data stored as an
+    AWS Public Dataset.
+    """
 
     # Template of the country part of all record keys
     _RECORDS_KEY_COUNTRY_TEMPLATE = 'records/country_code={}/'
@@ -40,6 +44,18 @@ class AwsDataClient(object):
     _S3_BUCKET_REGION = 'us-east-1'
 
     def __init__(self, country_code, s3_client=None):
+        """
+        Initialize AwsDataClient with the following parameters:
+
+        :param country_code: The ISO 3166 two-letter country code
+            for which data is required. It is case-insensitive
+            as the value specified will be converted to lower case.
+        :type country_code: str
+
+        :param s3_client: The S3 client to use to access OpenEEW data
+            on AWS.
+        :type s3_client: boto3.client.s3
+        """
 
         self.country_code = country_code
         self._s3_client = s3_client or boto3.client(
@@ -50,6 +66,11 @@ class AwsDataClient(object):
 
     @property
     def country_code(self):
+        """
+        :return: ISO 3166 two-letter country code of the client
+            in lower case.
+        :rtype: str
+        """
         return self._country_code
 
     @country_code.setter
@@ -282,19 +303,21 @@ class AwsDataClient(object):
         Returns records filtered by date and device.
 
         :param start_date_utc: The UTC start date
-        with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
-        Only records with a cloud_t equal to or greater than
-        start_date_utc will be returned.
-        :type utc_date: str
+            with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
+            Only records with a cloud_t equal to or greater than
+            start_date_utc will be returned.
+        :type start_date_utc: str
 
         :param end_date_utc: The UTC end date with same format as
-        start_date_utc. Only records with a cloud_t
-        equal to or less than end_date_utc will be returned.
-        :type utc_date: str
+            start_date_utc. Only records with a cloud_t
+            equal to or less than end_date_utc will be returned.
+        :type end_date_utc: str
 
         :param device_ids: List of device IDs that should be returned.
         :type device_ids: list[str]
 
+        :return: A list of records, where each record is a dict
+            obtained from the stored JSON value
         :rtype: list[dict]
         """
 
@@ -329,19 +352,23 @@ class AwsDataClient(object):
         date and device.
 
         :param start_date_utc: The UTC start date
-        with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
-        Only records with a cloud_t equal to or greater than
-        start_date_utc will be returned.
-        :type utc_date: str
+            with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
+            Only records with a cloud_t equal to or greater than
+            start_date_utc will be returned.
+        :type start_date_utc: str
 
         :param end_date_utc: The UTC end date with same format as
-        start_date_utc. Only records with a cloud_t
-        equal to or less than end_date_utc will be returned.
-        :type utc_date: str
+            start_date_utc. Only records with a cloud_t
+            equal to or less than end_date_utc will be returned.
+        :type end_date_utc: str
 
         :param device_ids: List of device IDs that should be returned.
         :type device_ids: list[str]
 
+        :return: A pandas DataFrame with columns the same as
+            the keys of each record, with additional sample_t
+            column giving an individual timestamp to each
+            of the x, y and z array elements.
         :rtype: pandas.DataFrame
         """
 
@@ -357,6 +384,7 @@ class AwsDataClient(object):
         """
         Gets full history of device metadata.
 
+        :return: A list of device metadata.
         :rtype: list[dict]
         """
 
@@ -374,8 +402,9 @@ class AwsDataClient(object):
 
     def get_current_devices(self):
         """
-        Gets currently-valid device metadata
+        Gets currently-valid device metadata.
 
+        :return: A list of device metadata.
         :rtype: list[dict]
         """
 
@@ -389,9 +418,10 @@ class AwsDataClient(object):
         Gets device metadata as of a chosen UTC date.
 
         :param date_utc: The UTC date with format %Y-%m-%d %H:%M:%S.
-        E.g. '2018-02-16 23:39:38'.
+            E.g. '2018-02-16 23:39:38'.
         :type date_utc: str
 
+        :return: A list of device metadata.
         :rtype: list[dict]
         """
 
