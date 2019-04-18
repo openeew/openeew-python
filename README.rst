@@ -1,8 +1,8 @@
 ====
-OpenEEW library for Python
+OpenEEW package for Python
 ====
 
-The OpenEEW library for Python (versions 3.4 and above) will contain a collection of tools for working with OpenEEW, including:
+The OpenEEW package for Python (versions 3.4 and above) will contain a collection of tools for working with OpenEEW, including:
 
 * downloading and analyzing accelerometer data
 * real-time data processing
@@ -10,18 +10,18 @@ The OpenEEW library for Python (versions 3.4 and above) will contain a collectio
 
 Currently it provides a client to simplify downloading data held as an `AWS Public Dataset <https://registry.opendata.aws/grillo-openeew/>`_. See `here <https://github.com/grillo/openeew/tree/master/data#accessing-openeew-data-on-aws>`_ for information about how data is organized.
 
-More library features will be coming soon.
+More features will be coming soon.
 
 Installation
 ===========
 
-The library can be installed using ``pip`` (it should correspond to Python 3.4 or above)::
+The package can be installed using ``pip`` (it should correspond to Python 3.4 or above)::
 
   pip install openeew
 
 Usage
 ===========
-Here is an example of how the library can be used to download data for a chosen date range.
+Here is an example of how the package can be used to download data for a chosen date range.
 
 First import the ``AwsDataClient`` class::
 
@@ -72,4 +72,4 @@ This project welcomes contributions. See `CONTRIBUTING.rst <CONTRIBUTING.rst>`_ 
 
 License
 ===========
-This library is distrubted under the Apache License, Version 2.0. See `LICENSE <LICENSE>`_.
+This package is distrubted under the Apache License, Version 2.0. See `LICENSE <LICENSE>`_.
