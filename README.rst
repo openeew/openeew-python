@@ -12,6 +12,8 @@ Currently it provides a client to simplify downloading data held as an `AWS Publ
 
 More features will be coming soon.
 
+More detailed documentation is available at `https://openeew-python.readthedocs.io <https://openeew-python.readthedocs.io>`_.
+
 Installation
 ===========
 
