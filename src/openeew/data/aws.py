@@ -53,7 +53,8 @@ class AwsDataClient(object):
         :type country_code: str
 
         :param s3_client: The S3 client to use to access OpenEEW data
-            on AWS.
+            on AWS. If no value is given, an anonymous S3 client
+            will be used.
         :type s3_client: boto3.client.s3
         """
 
@@ -68,7 +69,8 @@ class AwsDataClient(object):
     def country_code(self):
         """
         :return: ISO 3166 two-letter country code of the client
-            in lower case.
+            (in lower case). Any data returned by the client will
+            be for this country.
         :rtype: str
         """
         return self._country_code
@@ -300,7 +302,7 @@ class AwsDataClient(object):
     def get_filtered_records(self, start_date_utc, end_date_utc,
                              device_ids=None):
         """
-        Returns records filtered by date and device.
+        Returns accelerometer records filtered by date and device.
 
         :param start_date_utc: The UTC start date
             with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
@@ -317,7 +319,10 @@ class AwsDataClient(object):
         :type device_ids: list[str]
 
         :return: A list of records, where each record is a dict
-            obtained from the stored JSON value
+            obtained from the stored JSON value. For details about the
+            JSON records, see
+            `Data fields <https://github.com/grillo/openeew/tree/master/data#data-fields>`_
+            for further information about how records are stored.
         :rtype: list[dict]
         """
 
@@ -348,8 +353,8 @@ class AwsDataClient(object):
     def get_filtered_records_df(self, start_date_utc, end_date_utc,
                                 device_ids=None):
         """
-        Returns a pandas.DataFrame containing records filtered by
-        date and device.
+        Returns a pandas.DataFrame containing accelerometer records
+        filtered by date and device.
 
         :param start_date_utc: The UTC start date
             with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
@@ -366,9 +371,13 @@ class AwsDataClient(object):
         :type device_ids: list[str]
 
         :return: A pandas DataFrame with columns the same as
-            the keys of each record, with additional sample_t
-            column giving an individual timestamp to each
-            of the x, y and z array elements.
+            the keys of each record
+            (see :func:`get_filtered_records`),
+            with additional sample_t column giving an individual
+            timestamp to each of the x, y and z array elements.
+            In addition, the column i indicates index value of the
+            x, y or z value in the corresponding record array,
+            and max_i gives the maximum value of i for the given array.
         :rtype: pandas.DataFrame
         """
 
@@ -384,7 +393,9 @@ class AwsDataClient(object):
         """
         Gets full history of device metadata.
 
-        :return: A list of device metadata.
+        :return: A list of device metadata. See
+            `Device metadata <https://github.com/grillo/openeew/tree/master/data#device-metadata>`_
+            for information about the fields.
         :rtype: list[dict]
         """
 
@@ -402,7 +413,8 @@ class AwsDataClient(object):
 
     def get_current_devices(self):
         """
-        Gets currently-valid device metadata.
+        Gets currently-valid device metadata. Fields are the same as
+        for :func:`get_devices_full_history`.
 
         :return: A list of device metadata.
         :rtype: list[dict]
@@ -415,7 +427,8 @@ class AwsDataClient(object):
 
     def get_devices_as_of_date(self, date_utc):
         """
-        Gets device metadata as of a chosen UTC date.
+        Gets device metadata as of a chosen UTC date. Fields are the
+        same as for :func:`get_devices_full_history`.
 
         :param date_utc: The UTC date with format %Y-%m-%d %H:%M:%S.
             E.g. '2018-02-16 23:39:38'.
