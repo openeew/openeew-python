@@ -5,7 +5,7 @@ OpenEEW library for Python
 The OpenEEW library for Python (versions 3.4 and above) will contain a collection of tools for working with OpenEEW, including:
 
 * downloading and analyzing accelerometer data
-* sensor firmware
+* real-time data processing
 * detection algorithms
 
 Currently it provides a client to simplify downloading data held as an `AWS Public Dataset <https://registry.opendata.aws/grillo-openeew/>`_. See `here <https://github.com/grillo/openeew/tree/master/data#accessing-openeew-data-on-aws>`_ for information about how data is organized.
