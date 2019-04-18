@@ -68,7 +68,7 @@ We can change the country if we want. So if we now want to look at Chile data::
 
 Contributing
 ===========
-This project welcomes contributions. See `CONTRIBUTING.md <CONTRIBUTING.md>`_ for more information.
+This project welcomes contributions. See `CONTRIBUTING.rst <CONTRIBUTING.rst>`_ for more information.
 
 License
 ===========
