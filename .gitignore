@@ -10,3 +10,6 @@ dist/
 sdist/
 *.egg-info/
 *.egg
+
+# Sphinx documentation
+docs/_build/
