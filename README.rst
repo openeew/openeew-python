@@ -14,7 +14,7 @@ OpenEEW package for Python
 .. image:: https://readthedocs.org/projects/openeew-python/badge/?version=latest
     :target: https://openeew-python.readthedocs.io/en/latest/?badge=latest
 
-The OpenEEW package for Python (versions 3.4 and above) will contain a collection of tools for working with OpenEEW, including:
+The OpenEEW package for Python will contain a collection of tools for working with OpenEEW, including:
 
 * downloading and analyzing accelerometer data
 * real-time data processing
@@ -29,7 +29,7 @@ More detailed documentation is available at `https://openeew-python.readthedocs.
 Installation
 ===========
 
-The package can be installed using ``pip`` (it should correspond to Python 3.4 or above)::
+The package can be installed using ``pip`` (for a suitable version of Python)::
 
   pip install openeew
 
