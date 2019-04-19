@@ -2,6 +2,18 @@
 OpenEEW package for Python
 ====
 
+.. image:: https://img.shields.io/pypi/v/openeew.svg
+    :target: https://pypi.python.org/pypi/openeew/
+
+.. image:: https://img.shields.io/pypi/pyversions/openeew.svg
+    :target: https://pypi.python.org/pypi/openeew/
+
+.. image:: https://travis-ci.org/grillo/openeew-python.svg?branch=master
+    :target: https://travis-ci.org/grillo/openeew-python
+   
+.. image:: https://readthedocs.org/projects/openeew-python/badge/?version=latest
+    :target: https://openeew-python.readthedocs.io/en/latest/?badge=latest
+
 The OpenEEW package for Python (versions 3.4 and above) will contain a collection of tools for working with OpenEEW, including:
 
 * downloading and analyzing accelerometer data
