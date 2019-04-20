@@ -17,7 +17,7 @@ setup(
         ],
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
-    python_requires='>=3.4',
+    python_requires='>=3.5',
     install_requires=['boto3', 'pandas'],
     zip_safe=False
     )
