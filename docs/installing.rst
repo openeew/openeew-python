@@ -3,7 +3,7 @@ Installing
 
 Requirements
 ------------
-Requires Python version 3.4 or later.
+Requires Python version 3.5 or later.
 
 Installation
 ------------
