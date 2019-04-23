@@ -24,7 +24,11 @@ Currently it provides a client to simplify downloading data held as an `AWS Publ
 
 More features will be coming soon.
 
-More detailed documentation is available at `https://openeew-python.readthedocs.io <https://openeew-python.readthedocs.io>`_. See `https://github.com/grillo/openeew <https://github.com/grillo/openeew>`_ for more information about OpenEEW.
+Some additional resources:
+
+* Package `documentation <https://openeew-python.readthedocs.io>`_
+* `OpenEEW <https://github.com/grillo/openeew>`_ GitHub repository
+* Join the `Grillo Community <https://community.grillo.io/>`_
 
 Installation
 ===========
