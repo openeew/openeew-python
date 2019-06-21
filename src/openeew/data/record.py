@@ -77,7 +77,7 @@ def add_sample_t_to_records(records, ref_t_name):
     Adds sample_t field to each record in a list of records.
 
     :param records: The record to which to add sample times.
-    :type record: listdict
+    :type records: list[dict]
 
     :param ref_t_name: The name of the time field to use as a reference when
         calculating sample times. This should be either cloud_t or device_t.
