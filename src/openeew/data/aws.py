@@ -22,6 +22,7 @@ import json
 from datetime import datetime
 from botocore import UNSIGNED
 from botocore.client import Config
+from openeew.data.record import add_sample_t_to_records
 
 
 class AwsDataClient(object):
@@ -257,23 +258,6 @@ class AwsDataClient(object):
         return records
 
     @staticmethod
-    def _add_max_i_to_records(records):
-        # Adds dict key 'max_i' to each dict in the records list with
-        # a value equal to the length of the x array, which is
-        # the same length as the y and z arrays.
-        # This value is useful to estimate sample point times of
-        # individual array elements.
-
-        return [{**d, 'max_i': len(d['x']) - 1} for d in records]
-
-    @staticmethod
-    def _get_sample_t_from_df(df, t='cloud_t'):
-        # Calculates individual sample point timestamp for each
-        # element of acceleration arrays in a pandas DataFrame
-
-        return df[t] - ((1/df['sr'])*(df['max_i'] - df['i']))
-
-    @staticmethod
     def _get_df_from_records(records):
         # Creates a pandas DataFrame from list of records.
         # Column sample_t is added to estimate individual
@@ -282,19 +266,14 @@ class AwsDataClient(object):
         records_df = pd.DataFrame()
         if len(records) > 0:
             # Add length of array as value to each dict
-            records = AwsDataClient._add_max_i_to_records(records)
+            records = add_sample_t_to_records(records, 'cloud_t')
             # Concatenate all dicts into a single DataFrame
             records_df = pd.concat(
                     [pd.DataFrame.from_dict(j) for j in records]
                     )
-            # Get the array index value as its own column
-            records_df['i'] = records_df.index.values
-            # Get unique timestamps for each array value
-            records_df['sample_t'] = \
-                AwsDataClient._get_sample_t_from_df(records_df)
             # Sort values by device and then in chronological order
             records_df = records_df.sort_values(
-                    ['device_id', 'cloud_t', 'device_t', 'i']
+                    ['device_id', 'sample_t', 'device_t']
                     )
 
         return records_df
@@ -375,9 +354,6 @@ class AwsDataClient(object):
             (see :func:`get_filtered_records`),
             with additional sample_t column giving an individual
             timestamp to each of the x, y and z array elements.
-            In addition, the column i indicates index value of the
-            x, y or z value in the corresponding record array,
-            and max_i gives the maximum value of i for the given array.
         :rtype: pandas.DataFrame
         """
 

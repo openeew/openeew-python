@@ -12,6 +12,14 @@ openeew.data.aws module
     :undoc-members:
     :show-inheritance:
 
+openeew.data.record module
+--------------------------
+
+.. automodule:: openeew.data.record
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Module contents
 ---------------
