@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='openeew',
-    version='0.1.3',
+    version='0.2.0',
     description='OpenEEW library for Python',
     author='Grillo',
     author_email='openeew@grillo.io',

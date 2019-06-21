@@ -4,6 +4,10 @@ Changelog
 
 openeew uses `Semantic Versioning <http://semver.org/>`_
 
+Version 0.2.0
+=============
+- Added record submodule to openeew.data
+
 Version 0.1.3
 =============
 - Fixed/updated docstrings
