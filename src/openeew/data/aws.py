@@ -16,13 +16,11 @@
 
 import boto3
 import difflib
-import pandas as pd
 import io
 import json
 from datetime import datetime
 from botocore import UNSIGNED
 from botocore.client import Config
-from openeew.data.record import add_sample_t_to_records
 
 
 class AwsDataClient(object):
@@ -257,27 +255,6 @@ class AwsDataClient(object):
 
         return records
 
-    @staticmethod
-    def _get_df_from_records(records):
-        # Creates a pandas DataFrame from list of records.
-        # Column sample_t is added to estimate individual
-        # sample point timestamps for each array element
-
-        records_df = pd.DataFrame()
-        if len(records) > 0:
-            # Add length of array as value to each dict
-            records = add_sample_t_to_records(records, 'cloud_t')
-            # Concatenate all dicts into a single DataFrame
-            records_df = pd.concat(
-                    [pd.DataFrame.from_dict(j) for j in records]
-                    )
-            # Sort values by device and then in chronological order
-            records_df = records_df.sort_values(
-                    ['device_id', 'sample_t', 'device_t']
-                    )
-
-        return records_df
-
     def get_filtered_records(self, start_date_utc, end_date_utc,
                              device_ids=None):
         """
@@ -328,42 +305,6 @@ class AwsDataClient(object):
                     ]
 
         return records
-
-    def get_filtered_records_df(self, start_date_utc, end_date_utc,
-                                device_ids=None):
-        """
-        Returns a pandas.DataFrame containing accelerometer records
-        filtered by date and device.
-
-        :param start_date_utc: The UTC start date
-            with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
-            Only records with a cloud_t equal to or greater than
-            start_date_utc will be returned.
-        :type start_date_utc: str
-
-        :param end_date_utc: The UTC end date with same format as
-            start_date_utc. Only records with a cloud_t
-            equal to or less than end_date_utc will be returned.
-        :type end_date_utc: str
-
-        :param device_ids: List of device IDs that should be returned.
-        :type device_ids: list[str]
-
-        :return: A pandas DataFrame with columns the same as
-            the keys of each record
-            (see :func:`get_filtered_records`),
-            with additional sample_t column giving an individual
-            timestamp to each of the x, y and z array elements.
-        :rtype: pandas.DataFrame
-        """
-
-        return AwsDataClient._get_df_from_records(
-                self.get_filtered_records(
-                        start_date_utc,
-                        end_date_utc,
-                        device_ids
-                        )
-                )
 
     def get_devices_full_history(self):
         """
