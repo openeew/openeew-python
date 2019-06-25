@@ -67,10 +67,9 @@ Then call the ``get_filtered_records`` method::
     
 We can also get the data as a pandas.DataFrame::
 
-  records_df = data_client.get_filtered_records_df(
-    start_date_utc,
-    end_date_utc
-    )
+  from openeew.data.df import get_df_from_records
+
+  records_df = get_df_from_records(records)
     
 It is also possible to specify a list of device IDs::
 
