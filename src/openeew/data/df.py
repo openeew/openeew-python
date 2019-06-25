@@ -18,7 +18,7 @@ from openeew.data.record import add_sample_t_to_records
 import pandas as pd
 
 
-def records_to_df(records, ref_t_name='cloud_t'):
+def get_df_from_records(records, ref_t_name='cloud_t'):
     """
     Returns a pandas DataFrame from a list of records.
 
