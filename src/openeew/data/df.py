@@ -40,7 +40,7 @@ def get_df_from_records(records, ref_t_name='cloud_t'):
     if not records:
         raise ValueError('The list of records should be non-empty')
 
-    # Add length of array as value to each dict
+    # Add list of sample times to each record
     records = add_sample_t_to_records(records, ref_t_name)
     # Concatenate all dicts into a single DataFrame
     records_df = pd.concat(
