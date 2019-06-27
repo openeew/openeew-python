@@ -4,6 +4,14 @@ Changelog
 
 openeew uses `Semantic Versioning <http://semver.org/>`_
 
+Unreleased
+=============
+- Added df submodule to openeew.data.
+  The method get_filtered_records_df of AwsDataClient in openeew.data.aws
+  has been removed and instead the function get_df_from_records in
+  openeew.data.df can be used to return a pandas DataFrame
+  from a list of records.
+
 Version 0.2.0
 =============
 - Added record submodule to openeew.data
