@@ -11,6 +11,7 @@ Unreleased
   has been removed and instead the function get_df_from_records in
   openeew.data.df can be used to return a pandas DataFrame
   from a list of records.
+- Fixed/updated docstrings
 
 Version 0.2.0
 =============
