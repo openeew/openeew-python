@@ -4,7 +4,7 @@ Changelog
 
 openeew uses `Semantic Versioning <http://semver.org/>`_
 
-Unreleased
+Version 0.3.0
 =============
 - Added df submodule to openeew.data.
   The method get_filtered_records_df of AwsDataClient in openeew.data.aws
