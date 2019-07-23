@@ -14,7 +14,9 @@
 # limitations under the License.
 # =============================================================================
 
+import aioboto3
 import boto3
+import asyncio
 import difflib
 import io
 import json
@@ -240,18 +242,25 @@ class AwsDataClient(object):
 
         return keys_to_download
 
-    def _get_records_from_key(self, key):
+    async def _get_records_from_key(self, key):
         # Gets records from a single key and converts them to a list of dicts
 
-        bytes_stream = io.BytesIO()
-        self._s3_client.download_fileobj(
-                AwsDataClient._S3_BUCKET_NAME,
-                key,
-                bytes_stream
-                )
-        bytes_stream.seek(0)
-        records = [json.loads(line) for line in bytes_stream.readlines()]
-        bytes_stream.close()
+        with io.BytesIO() as bytes_stream:
+
+            async with aioboto3.client(
+                    's3',
+                    region_name=AwsDataClient._S3_BUCKET_REGION,
+                    config=Config(signature_version=UNSIGNED)
+                    ) as async_s3_client:
+
+                await async_s3_client.download_fileobj(
+                    AwsDataClient._S3_BUCKET_NAME,
+                    key,
+                    bytes_stream
+                    )
+
+            bytes_stream.seek(0)
+            records = [json.loads(line) for line in bytes_stream.readlines()]
 
         return records
 
@@ -285,21 +294,33 @@ class AwsDataClient(object):
         start_dt = AwsDataClient._get_dt_from_str(start_date_utc)
         end_dt = AwsDataClient._get_dt_from_str(end_date_utc)
         # Get the list of keys based on start and end dates
+
         keys_to_download = self._get_records_keys_to_download(
                 start_dt,
                 end_dt,
                 device_ids
                 )
 
+        loop = asyncio.get_event_loop()
+
+        key_records = loop.run_until_complete(
+                asyncio.gather(
+                        *[
+                                self._get_records_from_key(k)
+                                for k in keys_to_download
+                                ]
+                        )
+                )
         # Initialize empty list in which to store dicts
         records = []
         # Now loop through all keys to download and
         # concatenate the resulting lists of dicts
-        for k in keys_to_download:
+
+        for kr in key_records:
             # Keep all individual records that
             # meet the date filter
             records += [
-                    d for d in self._get_records_from_key(k)
+                    d for d in kr
                     if d['cloud_t'] >= start_dt.timestamp() and
                     d['cloud_t'] <= end_dt.timestamp()
                     ]
