@@ -4,6 +4,10 @@ Changelog
 
 openeew uses `Semantic Versioning <http://semver.org/>`_
 
+Unreleased
+=============
+- Use asyncio to speed up downloading of files in AwsDataClient
+
 Version 0.3.0
 =============
 - Added df submodule to openeew.data.
