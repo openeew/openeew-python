@@ -267,19 +267,20 @@ class AwsDataClient(object):
 
         return keys_to_download
 
-    async def _get_records_from_key(self, key):
+    @classmethod
+    async def _get_records_from_key(cls, key):
         # Gets records from a single key and converts them to a list of dicts
 
         with io.BytesIO() as bytes_stream:
 
             async with aioboto3.client(
                     's3',
-                    region_name=AwsDataClient._S3_BUCKET_REGION,
+                    region_name=cls._S3_BUCKET_REGION,
                     config=Config(signature_version=UNSIGNED)
                     ) as async_s3_client:
 
                 await async_s3_client.download_fileobj(
-                    AwsDataClient._S3_BUCKET_NAME,
+                    cls._S3_BUCKET_NAME,
                     key,
                     bytes_stream
                     )
@@ -316,8 +317,8 @@ class AwsDataClient(object):
         :rtype: list[dict]
         """
 
-        start_dt = AwsDataClient._get_dt_from_str(start_date_utc)
-        end_dt = AwsDataClient._get_dt_from_str(end_date_utc)
+        start_dt = self._get_dt_from_str(start_date_utc)
+        end_dt = self._get_dt_from_str(end_date_utc)
         # Get the list of keys based on start and end dates
 
         keys_to_download = self._get_records_keys_to_download(
@@ -364,7 +365,7 @@ class AwsDataClient(object):
 
         bytes_stream = io.BytesIO()
         self._s3_client.download_fileobj(
-                AwsDataClient._S3_BUCKET_NAME,
+                self._S3_BUCKET_NAME,
                 self._devices_key,
                 bytes_stream
                 )
@@ -401,7 +402,7 @@ class AwsDataClient(object):
         :rtype: list[dict]
         """
 
-        ts = AwsDataClient._get_dt_from_str(date_utc).timestamp()
+        ts = self._get_dt_from_str(date_utc).timestamp()
 
         return [
                 d for d in self.get_devices_full_history()
