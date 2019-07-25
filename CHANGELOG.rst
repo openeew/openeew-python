@@ -4,9 +4,11 @@ Changelog
 
 openeew uses `Semantic Versioning <http://semver.org/>`_
 
-Unreleased
+Version 0.4.0
 =============
 - Use asyncio to speed up downloading of files in AwsDataClient
+- Speed up search for S3 keys within specified date range
+- Updated some AwsDataClient method decorators
 
 Version 0.3.0
 =============
