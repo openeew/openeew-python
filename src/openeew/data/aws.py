@@ -66,7 +66,7 @@ class AwsDataClient(object):
         self.country_code = country_code
         self._s3_client = s3_client or boto3.client(
                 's3',
-                region_name=AwsDataClient._S3_BUCKET_REGION,
+                region_name=self._S3_BUCKET_REGION,
                 config=Config(signature_version=UNSIGNED)
                 )
 
