@@ -17,10 +17,9 @@
 import aioboto3
 import boto3
 import asyncio
-import difflib
 import io
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from botocore import UNSIGNED
 from botocore.client import Config
 
@@ -35,8 +34,13 @@ class AwsDataClient(object):
     _RECORDS_KEY_COUNTRY_TEMPLATE = 'records/country_code={}/'
     # Template of the device part of all record keys
     _RECORDS_KEY_DEVICE_TEMPLATE = 'device_id={}/'
-    # Template of the date part of all record keys
-    _RECORDS_KEY_DATE_TEMPLATE = 'year={}/month={}/day={}/hour={}/'
+    # Template of the year-month-day part of all record keys
+    _RECORDS_KEY_YMD_TEMPLATE = 'year={}/month={}/day={}/'
+    # Template of the hour part of all record keys
+    _RECORDS_KEY_HOUR_TEMPLATE = 'hour={}/'
+    # Template of the year-month-day-hour part of all record keys
+    _RECORDS_KEY_DATE_TEMPLATE = _RECORDS_KEY_YMD_TEMPLATE + \
+        _RECORDS_KEY_HOUR_TEMPLATE
     # Template of the country part of all device metadata keys
     _DEVICES_KEY_TEMPLATE = 'devices/country_code={}/devices.jsonl'
     # Name of the S3 bucket where OpenEEW data is stored
@@ -97,11 +101,11 @@ class AwsDataClient(object):
         except Exception as e:
             raise ValueError('The date must be in format YYYY-mm-dd HH:MM:SS')
 
-    @staticmethod
-    def _get_records_key_date_part(date_parts):
+    @classmethod
+    def _get_records_key_date_part(cls, date_parts):
         # Returns the date part of the records key
 
-        return AwsDataClient._RECORDS_KEY_DATE_TEMPLATE.format(
+        return cls._RECORDS_KEY_DATE_TEMPLATE.format(
             date_parts['year'],
             date_parts['month'],
             date_parts['day'],
@@ -114,7 +118,7 @@ class AwsDataClient(object):
         paginator = self._s3_client.get_paginator('list_objects_v2')
 
         pages = paginator.paginate(
-                Bucket=AwsDataClient._S3_BUCKET_NAME,
+                Bucket=self._S3_BUCKET_NAME,
                 Prefix=self._records_key_country_part,
                 Delimiter='/'
                 )
@@ -130,23 +134,7 @@ class AwsDataClient(object):
         # Returns a key prefix including country_code and device_id
 
         return self._records_key_country_part + \
-            AwsDataClient._RECORDS_KEY_DEVICE_TEMPLATE.format(device_id)
-
-    @staticmethod
-    def _get_common_prefix(prefix_a, prefix_b):
-        # Returns the common substring from the start
-
-        # Get common sequences
-        s = difflib.SequenceMatcher(a=prefix_a, b=prefix_b)
-
-        # Get all matching blocks
-        matching_block = [
-                mb for mb in s.get_matching_blocks()
-                if mb[0] == 0 and mb[1] == 0
-                ][0]
-
-        # Return the starting block in common
-        return prefix_a[matching_block[0]:matching_block[2]]
+            self._RECORDS_KEY_DEVICE_TEMPLATE.format(device_id)
 
     @staticmethod
     def _get_date_parts_as_strings(dt):
@@ -162,99 +150,137 @@ class AwsDataClient(object):
                 'minute': '%02d' % dt.minute
                 }
 
+    @classmethod
+    def _get_max_key_date_part_full(cls, dt):
+        # Get maximum possible date part of key,
+        # including minute and file extension
+
+        date_parts = cls._get_date_parts_as_strings(dt)
+
+        return cls._get_records_key_date_part(date_parts) + \
+            '{}.jsonl'.format(date_parts['minute'])
+
+    @classmethod
+    def _get_key_date_parts_within_range(cls, start_dt, end_dt):
+        # For given start and end dates, returns a list of key date parts
+        # to be used as search prefixes, where each date part corresponds to
+        # one day
+
+        key_date_parts_within_range = []
+        this_dt = start_dt
+        while this_dt.date() <= end_dt.date():
+
+            date_parts = \
+                    cls._get_date_parts_as_strings(this_dt)
+
+            key_date_parts_within_range.append(
+                    cls._RECORDS_KEY_YMD_TEMPLATE.format(
+                                    date_parts['year'],
+                                    date_parts['month'],
+                                    date_parts['day']
+                                    )
+                    )
+
+            this_dt = this_dt + timedelta(days=1)
+
+        return key_date_parts_within_range
+
     def _get_records_keys_to_download(self, start_dt, end_dt, device_ids=None):
         # Returns list of keys that contain required data.
 
         if end_dt < start_dt:
             raise ValueError('end date should not be earlier than start date')
 
-        # Get the start and date parts in order to construct keys
-        start_date_parts = AwsDataClient._get_date_parts_as_strings(start_dt)
-        end_date_parts = AwsDataClient._get_date_parts_as_strings(end_dt)
-
-        start_key_date_part = \
-            AwsDataClient._get_records_key_date_part(start_date_parts)
-        end_key_date_part = \
-            AwsDataClient._get_records_key_date_part(end_date_parts)
-
-        # Get the common prefix between the start and end keys
-        # to narrow our search of files. This should not include the
-        # minute part in case the start and end dates are
-        # for the same minute
-        common_date_part = AwsDataClient._get_common_prefix(
-                start_key_date_part,
-                end_key_date_part
+        # A simple lower bound for keys to download (without making
+        # assumptions on num minutes contained per file) is given by
+        # the hour corresponding to the start date
+        start_key_date_part_lower_bound = \
+            self._get_records_key_date_part(
+                self._get_date_parts_as_strings(start_dt)
                 )
 
-        start_key_date_part_full = start_key_date_part + \
-            '{}.jsonl'.format(start_date_parts['minute'])
-        end_key_date_part_full = end_key_date_part + \
-            '{}.jsonl'.format(end_date_parts['minute'])
+        # Get max possible key values that contain data for
+        # start and end dates, respectively
+        max_start_key_date_part_full = \
+            self._get_max_key_date_part_full(start_dt)
+        max_end_key_date_part_full = \
+            self._get_max_key_date_part_full(end_dt)
+
+        # Get list of date parts to be used as search prefixes
+        key_date_parts_within_range = \
+            self._get_key_date_parts_within_range(start_dt, end_dt)
 
         # Initialize empty list to store the keys to download
         keys_to_download = []
         paginator = self._s3_client.get_paginator('list_objects_v2')
         _device_ids = device_ids or self._get_device_ids_from_records()
         for d in _device_ids:
-            # Initialize list to store all keys that might contain
-            # data for the current device and chosen dates
-            candidate_keys = []
+
             device_prefix = self._get_records_key_device_prefix(d)
 
-            pages = paginator.paginate(
-                    Bucket=AwsDataClient._S3_BUCKET_NAME,
-                    Prefix=device_prefix + common_date_part
-                    )
+            for key_date_part in key_date_parts_within_range:
+                # Initialize list to store all keys that might contain
+                # data for the current device and chosen dates
+                candidate_keys = []
 
-            for p in pages:
-                if 'Contents' not in p.keys():
+                pages = paginator.paginate(
+                            Bucket=self._S3_BUCKET_NAME,
+                            Prefix=device_prefix + key_date_part
+                            )
+
+                for p in pages:
+                    if 'Contents' not in p.keys():
+                        continue
+                    # Select those keys that contain data before the
+                    # end date and no earlier than the hour of the
+                    # start date
+                    candidate_keys += [
+                            o['Key'] for o in p['Contents']
+                            if o['Key'] <= device_prefix +
+                            max_end_key_date_part_full and
+                            o['Key'] >= device_prefix +
+                            start_key_date_part_lower_bound
+                            ]
+
+                if not candidate_keys:
                     continue
-                # Select those keys that contain data before the
-                # end date
-                candidate_keys += [
-                        o['Key'] for o in p['Contents']
-                        if o['Key'] <= device_prefix +
-                        end_key_date_part_full
-                        ]
 
-            if len(candidate_keys) == 0:
-                continue
-
-            # Check which keys contain data before the start date
-            keys_before_start_date = [
-                    k for k in candidate_keys
-                    if k <= device_prefix + start_key_date_part_full
-                    ]
-
-            # If no keys contain data before start date, then no
-            # further filter is required and we keep all of them
-            if not keys_before_start_date:
-                keys_to_download += candidate_keys
-            else:
-                # Of all keys that contain data before start date,
-                # only the max of these might actually contain relevant
-                # data
-                max_key_before_start_date = max(keys_before_start_date)
-                keys_to_download += [
+                # Check which keys contain data before the start date
+                keys_before_start_date = [
                         k for k in candidate_keys
-                        if k >= max_key_before_start_date
+                        if k <= device_prefix + max_start_key_date_part_full
                         ]
+
+                # If no keys contain data before start date, then no
+                # further filter is required and we keep all of them
+                if not keys_before_start_date:
+                    keys_to_download += candidate_keys
+                else:
+                    # Of all keys that contain data before start date,
+                    # only the max of these might actually contain relevant
+                    # data
+                    max_key_before_start_date = max(keys_before_start_date)
+                    keys_to_download += [
+                            k for k in candidate_keys
+                            if k >= max_key_before_start_date
+                            ]
 
         return keys_to_download
 
-    async def _get_records_from_key(self, key):
+    @classmethod
+    async def _get_records_from_key(cls, key):
         # Gets records from a single key and converts them to a list of dicts
 
         with io.BytesIO() as bytes_stream:
 
             async with aioboto3.client(
                     's3',
-                    region_name=AwsDataClient._S3_BUCKET_REGION,
+                    region_name=cls._S3_BUCKET_REGION,
                     config=Config(signature_version=UNSIGNED)
                     ) as async_s3_client:
 
                 await async_s3_client.download_fileobj(
-                    AwsDataClient._S3_BUCKET_NAME,
+                    cls._S3_BUCKET_NAME,
                     key,
                     bytes_stream
                     )
@@ -291,8 +317,8 @@ class AwsDataClient(object):
         :rtype: list[dict]
         """
 
-        start_dt = AwsDataClient._get_dt_from_str(start_date_utc)
-        end_dt = AwsDataClient._get_dt_from_str(end_date_utc)
+        start_dt = self._get_dt_from_str(start_date_utc)
+        end_dt = self._get_dt_from_str(end_date_utc)
         # Get the list of keys based on start and end dates
 
         keys_to_download = self._get_records_keys_to_download(
@@ -339,7 +365,7 @@ class AwsDataClient(object):
 
         bytes_stream = io.BytesIO()
         self._s3_client.download_fileobj(
-                AwsDataClient._S3_BUCKET_NAME,
+                self._S3_BUCKET_NAME,
                 self._devices_key,
                 bytes_stream
                 )
@@ -376,7 +402,7 @@ class AwsDataClient(object):
         :rtype: list[dict]
         """
 
-        ts = AwsDataClient._get_dt_from_str(date_utc).timestamp()
+        ts = self._get_dt_from_str(date_utc).timestamp()
 
         return [
                 d for d in self.get_devices_full_history()
