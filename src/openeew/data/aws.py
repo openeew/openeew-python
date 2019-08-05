@@ -268,27 +268,45 @@ class AwsDataClient(object):
         return keys_to_download
 
     @classmethod
-    async def _get_records_from_key(cls, key):
+    async def _get_records_from_key(cls, async_s3_client, key):
         # Gets records from a single key and converts them to a list of dicts
 
         with io.BytesIO() as bytes_stream:
 
-            async with aioboto3.client(
-                    's3',
-                    region_name=cls._S3_BUCKET_REGION,
-                    config=Config(signature_version=UNSIGNED)
-                    ) as async_s3_client:
-
-                await async_s3_client.download_fileobj(
-                    cls._S3_BUCKET_NAME,
-                    key,
-                    bytes_stream
-                    )
+            await async_s3_client.download_fileobj(
+                cls._S3_BUCKET_NAME,
+                key,
+                bytes_stream
+                )
 
             bytes_stream.seek(0)
             records = [json.loads(line) for line in bytes_stream.readlines()]
 
         return records
+
+    @classmethod
+    async def _download_keys(cls, keys_to_download):
+        # Gets all records from list of keys.
+        # Returns a list of lists of dicts
+
+        # Set up async S3 client
+        async_s3_client = aioboto3.client(
+                's3',
+                region_name=cls._S3_BUCKET_REGION,
+                config=Config(signature_version=UNSIGNED)
+                )
+
+        # Define coroutines, one for each file to download
+        coros = [
+                cls._get_records_from_key(async_s3_client, k)
+                for k in keys_to_download
+                    ]
+
+        key_records = await asyncio.gather(*coros)
+
+        await async_s3_client.close()
+
+        return key_records
 
     def get_filtered_records(self, start_date_utc, end_date_utc,
                              device_ids=None):
@@ -330,12 +348,7 @@ class AwsDataClient(object):
         loop = asyncio.get_event_loop()
 
         key_records = loop.run_until_complete(
-                asyncio.gather(
-                        *[
-                                self._get_records_from_key(k)
-                                for k in keys_to_download
-                                ]
-                        )
+                self._download_keys(keys_to_download)
                 )
         # Initialize empty list in which to store dicts
         records = []
