@@ -4,6 +4,10 @@ Changelog
 
 openeew uses `Semantic Versioning <http://semver.org/>`_
 
+Version 0.5.0
+=============
+- Use one async client to download all files.
+
 Version 0.4.0
 =============
 - Use asyncio to speed up downloading of files in AwsDataClient
