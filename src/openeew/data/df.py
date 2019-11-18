@@ -14,11 +14,11 @@
 # limitations under the License.
 # =============================================================================
 
-from openeew.data.record import add_sample_t_to_records
+from .record import add_sample_t_to_records
 import pandas as pd
 
 
-def get_df_from_records(records, ref_t_name='cloud_t'):
+def get_df_from_records(records, ref_t_name='cloud_t', ref_axis='x'):
     """
     Returns a pandas DataFrame from a list of records.
 
@@ -29,6 +29,10 @@ def get_df_from_records(records, ref_t_name='cloud_t'):
     :param ref_t_name: The name of the time field to use as a reference when
         calculating sample times. This should be either cloud_t or device_t.
     :type ref_t_name: str
+
+    :param ref_axis: The axis to use when determining
+        the number of sample points in each record.
+    :type ref_axis: str
 
     :return: A pandas DataFrame with columns the same as
         the keys of each record and an additional sample_t column
@@ -41,7 +45,7 @@ def get_df_from_records(records, ref_t_name='cloud_t'):
         raise ValueError('The list of records should be non-empty')
 
     # Add list of sample times to each record
-    records = add_sample_t_to_records(records, ref_t_name)
+    records = add_sample_t_to_records(records, ref_t_name, ref_axis)
     # Concatenate all dicts into a single DataFrame
     records_df = pd.concat(
             [pd.DataFrame.from_dict(r) for r in records]
