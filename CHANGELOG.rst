@@ -4,6 +4,10 @@ Changelog
 
 openeew uses `Semantic Versioning <http://semver.org/>`_
 
+Unreleased
+=============
+- Allow to get number of sample points in a record using general axis labels
+
 Version 0.5.0
 =============
 - Use one async client to download all files.
