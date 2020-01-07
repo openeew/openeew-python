@@ -41,7 +41,7 @@ def get_sample_t(ref_t, idx, num_samples, sr):
     return ref_t - ((1/sr)*(num_samples - 1 - idx))
 
 
-def add_sample_t(record, ref_t_name):
+def add_sample_t(record, ref_t_name, ref_axis):
     """
     Adds a list of sample times to a record corresponding to
     each sample point in the record.
@@ -52,6 +52,10 @@ def add_sample_t(record, ref_t_name):
     :param ref_t_name: The name of the time field to use as a reference when
         calculating sample times. This should be either cloud_t or device_t.
     :type ref_t_name: str
+
+    :param ref_axis: The axis to use when determining
+        the number of sample points in the record.
+    :type ref_axis: str
 
     :return: A record with additional sample_t field containing
         list of sample times.
@@ -64,15 +68,15 @@ def add_sample_t(record, ref_t_name):
                     round(get_sample_t(
                                 record[ref_t_name],
                                 i,
-                                len(record['x']),
+                                len(record[ref_axis]),
                                 record['sr']
                                 ), 3)
-                    for i in range(0, len(record['x']))
+                    for i in range(0, len(record[ref_axis]))
                     ]
             }
 
 
-def add_sample_t_to_records(records, ref_t_name):
+def add_sample_t_to_records(records, ref_t_name, ref_axis):
     """
     Adds sample_t field to each record in a list of records.
 
@@ -83,9 +87,13 @@ def add_sample_t_to_records(records, ref_t_name):
         calculating sample times. This should be either cloud_t or device_t.
     :type ref_t_name: str
 
+    :param ref_axis: The axis to use when determining
+        the number of sample points in each record.
+    :type ref_axis: str
+
     :return: A list of records with additional sample_t field containing
         list of sample times.
     :rtype: list[dict]
     """
 
-    return [add_sample_t(r, ref_t_name) for r in records]
+    return [add_sample_t(r, ref_t_name, ref_axis) for r in records]
