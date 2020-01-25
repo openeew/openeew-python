@@ -191,6 +191,19 @@ class AwsDataClient(object):
         if end_dt < start_dt:
             raise ValueError('end date should not be earlier than start date')
 
+        if device_ids is None:
+            # Get list of all available devices
+            _device_ids = self._get_device_ids_from_records()
+        elif isinstance(device_ids, str):
+            # Add single device to list
+            _device_ids = [device_ids]
+        elif isinstance(device_ids, list):
+            # Use list directly
+            _device_ids = device_ids
+        else:
+            raise ValueError('device_ids, if specified, should be either '
+                             'a string or a list')
+
         # A simple lower bound for keys to download (without making
         # assumptions on num minutes contained per file) is given by
         # the hour corresponding to the start date
@@ -213,7 +226,7 @@ class AwsDataClient(object):
         # Initialize empty list to store the keys to download
         keys_to_download = []
         paginator = self._s3_client.get_paginator('list_objects_v2')
-        _device_ids = device_ids or self._get_device_ids_from_records()
+
         for d in _device_ids:
 
             device_prefix = self._get_records_key_device_prefix(d)
@@ -324,8 +337,8 @@ class AwsDataClient(object):
             equal to or less than end_date_utc will be returned.
         :type end_date_utc: str
 
-        :param device_ids: List of device IDs that should be returned.
-        :type device_ids: list[str]
+        :param device_ids: Device IDs that should be returned.
+        :type device_ids: Union[str, list[str]]
 
         :return: A list of records, where each record is a dict
             obtained from the stored JSON value. For details about the

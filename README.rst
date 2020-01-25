@@ -78,6 +78,14 @@ It is also possible to specify a list of device IDs::
     ['001', '008'] # optional list of device IDs
     )
     
+A single device ID can be passed as a string::
+
+  records = data_client.get_filtered_records(
+    start_date_utc,
+    end_date_utc,
+    '001' # optional single device ID
+    )
+
 We can change the country if we want. So if we now want to look at Chile data::
 
   data_client.country_code = 'cl'
