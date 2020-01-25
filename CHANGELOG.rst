@@ -7,6 +7,7 @@ openeew uses `Semantic Versioning <http://semver.org/>`_
 Unreleased
 =============
 - Allow to get number of sample points in a record using general axis labels
+- Pass single device ID as string when retrieving records
 
 Version 0.5.0
 =============
