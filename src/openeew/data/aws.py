@@ -47,6 +47,8 @@ class AwsDataClient(object):
     _S3_BUCKET_NAME = 'grillo-openeew'
     # Region of the S3 bucket where OpenEEW data is stored
     _S3_BUCKET_REGION = 'us-east-1'
+    # Name of the time field used to assign records to files
+    _RECORD_T = 'cloud_t'
 
     def __init__(self, country_code, s3_client=None):
         """
@@ -328,12 +330,12 @@ class AwsDataClient(object):
 
         :param start_date_utc: The UTC start date
             with format %Y-%m-%d %H:%M:%S. E.g. '2018-02-16 23:39:38'.
-            Only records with a cloud_t equal to or greater than
+            Only records with a _RECORD_T equal to or greater than
             start_date_utc will be returned.
         :type start_date_utc: str
 
         :param end_date_utc: The UTC end date with same format as
-            start_date_utc. Only records with a cloud_t
+            start_date_utc. Only records with a _RECORD_T
             equal to or less than end_date_utc will be returned.
         :type end_date_utc: str
 
@@ -373,8 +375,8 @@ class AwsDataClient(object):
             # meet the date filter
             records += [
                     d for d in kr
-                    if d['cloud_t'] >= start_dt.timestamp() and
-                    d['cloud_t'] <= end_dt.timestamp()
+                    if d[self._RECORD_T] >= start_dt.timestamp() and
+                    d[self._RECORD_T] <= end_dt.timestamp()
                     ]
 
         return records
