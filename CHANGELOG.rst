@@ -9,6 +9,7 @@ Unreleased
 - Allow to get number of sample points in a record using general axis labels
 - Pass single device ID as string when retrieving records
 - Filter records based on time field name in class attribute
+- Create async S3 client based on non-async S3 client metadata `#10 <https://github.com/grillo/openeew-python/pull/10>`_
 
 Version 0.5.0
 =============
