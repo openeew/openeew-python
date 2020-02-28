@@ -299,27 +299,24 @@ class AwsDataClient(object):
 
         return records
 
-    @classmethod
-    async def _download_keys(cls, keys_to_download):
+    async def _download_keys(self, keys_to_download):
         # Gets all records from list of keys.
         # Returns a list of lists of dicts
 
-        # Set up async S3 client
-        async_s3_client = aioboto3.client(
+        # Set up async S3 client using same region and config as s3_client
+        async with aioboto3.client(
                 's3',
-                region_name=cls._S3_BUCKET_REGION,
-                config=Config(signature_version=UNSIGNED)
-                )
+                region_name=self._s3_client.meta.region_name,
+                config=self._s3_client.meta.config
+                ) as async_s3_client:
 
-        # Define coroutines, one for each file to download
-        coros = [
-                cls._get_records_from_key(async_s3_client, k)
-                for k in keys_to_download
-                    ]
+            # Define coroutines, one for each file to download
+            coros = [
+                    self._get_records_from_key(async_s3_client, k)
+                    for k in keys_to_download
+                        ]
 
-        key_records = await asyncio.gather(*coros)
-
-        await async_s3_client.close()
+            key_records = await asyncio.gather(*coros)
 
         return key_records
 
