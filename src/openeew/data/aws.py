@@ -24,6 +24,194 @@ from botocore import UNSIGNED
 from botocore.client import Config
 
 
+class DateTimeKeyBuilder(object):
+    """
+    A class for building the datetime part of keys that are
+    organized by a hierarchy that can include year, month,
+    day, hour and minute. The year part of the key must contain
+    the century, i.e. YYYY, and other parts are
+    zero-padded decimals, e.g. 01, 02 etc. An example of such
+    a key template would be "year={}/month={}/day={}/hour={}/{}".
+    """
+
+    # Datetime hierarchy parts
+    _DATE_PARTS = ('year', 'month', 'day', 'hour', 'minute')
+    # Min possible value for each element of _DATE_PARTS
+    _MIN_VALS = (1, 1, 1, 0, 0)
+
+    def __init__(self, year, month=None, day=None,
+                 hour=None, minute=None):
+        """
+        Initialize DateTimeKeyBuilder with the following parameters,
+        which are concatenated together in order of increasing
+        granularity to form key template:
+
+        :param year: Year part of key template, e.g. "year={}/".
+            Must contain {} for year replacement, where year
+            will be added as YYYY, e.g. 2020.
+        :type year: str
+
+        :param month: Optional month part of key template, e.g. "month={}/".
+            Must contain {} for month replacement, where month
+            will be added as zero-padded number,
+            i.e. 01, 02, ..., 12.
+        :type month: str
+
+        :param day: Optional day part of key template, e.g. "day={}/".
+            Must contain {} for day replacement, where day
+            will be added as zero-padded number,
+            i.e. 01, 02, ..., 31.
+        :type day: str
+
+        :param hour: Optional hour part of key template, e.g. "hour={}/".
+            Must contain {} for hour replacement, where hour
+            will be added as zero-padded number,
+            i.e. 00, 01, ..., 23.
+        :type hour: str
+
+        :param minute: Optional minute part of key template, e.g. "{}".
+            Must contain {} for minute replacement, where minute
+            will be added as zero-padded number,
+            i.e. 00, 01, ..., 59.
+        :type minute: str
+        """
+        if year is None:
+            raise ValueError('year part of template must not be None')
+        # Get all template parts with a value and stop as soon as we encounter
+        # one without, in order of increasing granularity
+        self._template_parts = []
+        for p in [year, month, day, hour, minute]:
+            if p is None:
+                break
+            self._template_parts.append(p)
+        # Get the index corresponding to most granular template part
+        self._idx_granularity = len(self._template_parts)-1
+        # Get the granularity of our key-builder object
+        self._granularity = self._DATE_PARTS[self._idx_granularity]
+
+    @property
+    def template_parts(self):
+        """
+        :return: A list of strings containing the defined template parts,
+            in the following order: year, month, day, hour and minute. The
+            length of list depends on which parts have been specified.
+        :rtype: list[str]
+        """
+        return self._template_parts
+
+    def _get_key_template_part(self, granularity):
+        # Get the key template up to the required
+        # granularity
+
+        if granularity not in self._DATE_PARTS:
+            raise ValueError(
+                'Unknown granularity {}. '
+                'Should be one of {}.'.format(
+                    granularity,
+                    self._DATE_PARTS
+                    )
+                )
+
+        # If the required granularity is greater
+        # than that available, use most granular available
+        idx = min(
+            self._DATE_PARTS.index(granularity),
+            self._idx_granularity
+            )
+
+        # Simply concatenate all the parts in order
+        # of granularity up to the required granularity
+        return ''.join(
+            self._template_parts[:idx+1]
+            )
+
+    @staticmethod
+    def _get_key_from_template(key_template, dt):
+        # Given a template and datetime object, dt, replace all
+        # placeholders with corresponding date part values
+
+        return key_template.format(
+            '%04d' % dt.year,
+            '%02d' % dt.month,
+            '%02d' % dt.day,
+            '%02d' % dt.hour,
+            '%02d' % dt.minute
+        )
+
+    def _get_key_part(self, dt, granularity):
+        # Given a datetime object, dt, return
+        # the key up to the required granularity
+
+        return self._get_key_from_template(
+            self._get_key_template_part(granularity),
+            dt
+            )
+
+    def get_max_key(self, dt):
+        """
+        Returns maximum possible key value for given datetime.
+
+        :param dt: The datetime to build key for.
+        :type dt: datetime.datetime
+
+        :return: Key part corresponding to the datetime.
+        :rtype: str
+        """
+        # _DATE_PARTS[-1] gives the max granularity possible
+        return self._get_key_part(dt, self._DATE_PARTS[-1])
+
+    def get_min_key(self, dt):
+        """
+        Returns minimum possible key value for given datetime.
+
+        :param dt: The datetime to build key for.
+        :type dt: datetime.datetime
+
+        :return: Key part corresponding to the datetime.
+        :rtype: str
+        """
+        # Depending on granularity of our key builder, replace
+        # that part of dt with corresponding min value
+        replacement = {
+            self._granularity: self._MIN_VALS[self._idx_granularity]
+            }
+
+        return self._get_key_part(
+            dt.replace(**replacement),
+            self._granularity
+            )
+
+    def get_key_prefixes_within_range(self, start_dt, end_dt):
+        """
+        Returns a list of key search prefixes for the given
+        date range, where each prefix corresponds to one day.
+
+        :param start_dt: The start of the datetime range.
+        :type start_dt: datetime.datetime
+
+        :param end_dt: The end of the datetime range.
+        :type end_dt: datetime.datetime
+
+        :return: List of key search prefixes.
+        :rtype: list[str]
+        """
+        if end_dt < start_dt:
+            raise ValueError('end date should not be earlier than start date')
+
+        key_prefixes_within_range = []
+        this_dt = start_dt
+        while this_dt.date() <= end_dt.date():
+
+            this_key_part = self._get_key_part(this_dt, 'day')
+
+            if this_key_part not in key_prefixes_within_range:
+                key_prefixes_within_range.append(this_key_part)
+
+            this_dt = this_dt + timedelta(days=1)
+
+        return key_prefixes_within_range
+
+
 class AwsDataClient(object):
     """
     A client for downloading OpenEEW data stored as an
@@ -34,13 +222,8 @@ class AwsDataClient(object):
     _RECORDS_KEY_COUNTRY_TEMPLATE = 'records/country_code={}/'
     # Template of the device part of all record keys
     _RECORDS_KEY_DEVICE_TEMPLATE = 'device_id={}/'
-    # Template of the year-month-day part of all record keys
-    _RECORDS_KEY_YMD_TEMPLATE = 'year={}/month={}/day={}/'
-    # Template of the hour part of all record keys
-    _RECORDS_KEY_HOUR_TEMPLATE = 'hour={}/'
-    # Template of the year-month-day-hour part of all record keys
-    _RECORDS_KEY_DATE_TEMPLATE = _RECORDS_KEY_YMD_TEMPLATE + \
-        _RECORDS_KEY_HOUR_TEMPLATE
+    # The suffix of all record keys
+    _RECORDS_KEY_SUFFIX = '.jsonl'
     # Template of the country part of all device metadata keys
     _DEVICES_KEY_TEMPLATE = 'devices/country_code={}/devices.jsonl'
     # Name of the S3 bucket where OpenEEW data is stored
@@ -71,6 +254,9 @@ class AwsDataClient(object):
                 region_name=self._S3_BUCKET_REGION,
                 config=Config(signature_version=UNSIGNED)
                 )
+        # Initialize a datetime key builder for forming records keys
+        self._dt_builder = DateTimeKeyBuilder(
+            'year={}/', 'month={}/', 'day={}/', 'hour={}/', '{}')
 
     @property
     def country_code(self):
@@ -94,24 +280,9 @@ class AwsDataClient(object):
     def _get_dt_from_str(date_utc):
         # Parses the input string with format YYYY-mm-dd HH:MM:SS into
         # a datetime.datetime object with UTC timezone
-
-        try:
-            return datetime.strptime(
-                '{} +0000'.format(date_utc),
-                '%Y-%m-%d %H:%M:%S %z'
-                )
-        except Exception as e:
-            raise ValueError('The date must be in format YYYY-mm-dd HH:MM:SS')
-
-    @classmethod
-    def _get_records_key_date_part(cls, date_parts):
-        # Returns the date part of the records key
-
-        return cls._RECORDS_KEY_DATE_TEMPLATE.format(
-            date_parts['year'],
-            date_parts['month'],
-            date_parts['day'],
-            date_parts['hour']
+        return datetime.strptime(
+            '{} +0000'.format(date_utc),
+            '%Y-%m-%d %H:%M:%S %z'
             )
 
     def _get_device_ids_from_records(self):
@@ -138,55 +309,6 @@ class AwsDataClient(object):
         return self._records_key_country_part + \
             self._RECORDS_KEY_DEVICE_TEMPLATE.format(device_id)
 
-    @staticmethod
-    def _get_date_parts_as_strings(dt):
-        # Returns a dictionary with the date parts
-        # in the necessary string format for working with record keys.
-        # dt should be UTC
-
-        return {
-                'year': str(dt.year),
-                'month': '%02d' % dt.month,
-                'day': '%02d' % dt.day,
-                'hour': '%02d' % dt.hour,
-                'minute': '%02d' % dt.minute
-                }
-
-    @classmethod
-    def _get_max_key_date_part_full(cls, dt):
-        # Get maximum possible date part of key,
-        # including minute and file extension
-
-        date_parts = cls._get_date_parts_as_strings(dt)
-
-        return cls._get_records_key_date_part(date_parts) + \
-            '{}.jsonl'.format(date_parts['minute'])
-
-    @classmethod
-    def _get_key_date_parts_within_range(cls, start_dt, end_dt):
-        # For given start and end dates, returns a list of key date parts
-        # to be used as search prefixes, where each date part corresponds to
-        # one day
-
-        key_date_parts_within_range = []
-        this_dt = start_dt
-        while this_dt.date() <= end_dt.date():
-
-            date_parts = \
-                    cls._get_date_parts_as_strings(this_dt)
-
-            key_date_parts_within_range.append(
-                    cls._RECORDS_KEY_YMD_TEMPLATE.format(
-                                    date_parts['year'],
-                                    date_parts['month'],
-                                    date_parts['day']
-                                    )
-                    )
-
-            this_dt = this_dt + timedelta(days=1)
-
-        return key_date_parts_within_range
-
     def _get_records_keys_to_download(self, start_dt, end_dt, device_ids=None):
         # Returns list of keys that contain required data.
 
@@ -209,21 +331,19 @@ class AwsDataClient(object):
         # A simple lower bound for keys to download (without making
         # assumptions on num minutes contained per file) is given by
         # the hour corresponding to the start date
-        start_key_date_part_lower_bound = \
-            self._get_records_key_date_part(
-                self._get_date_parts_as_strings(start_dt)
-                )
+        start_key_date_part_min = \
+            self._dt_builder.get_min_key(start_dt)
 
         # Get max possible key values that contain data for
         # start and end dates, respectively
-        max_start_key_date_part_full = \
-            self._get_max_key_date_part_full(start_dt)
-        max_end_key_date_part_full = \
-            self._get_max_key_date_part_full(end_dt)
+        start_key_date_part_max = \
+            self._dt_builder.get_max_key(start_dt)
+        end_key_date_part_max = \
+            self._dt_builder.get_max_key(end_dt)
 
         # Get list of date parts to be used as search prefixes
-        key_date_parts_within_range = \
-            self._get_key_date_parts_within_range(start_dt, end_dt)
+        key_date_prefixes_within_range = \
+            self._dt_builder.get_key_prefixes_within_range(start_dt, end_dt)
 
         # Initialize empty list to store the keys to download
         keys_to_download = []
@@ -233,14 +353,14 @@ class AwsDataClient(object):
 
             device_prefix = self._get_records_key_device_prefix(d)
 
-            for key_date_part in key_date_parts_within_range:
+            for key_date_prefix in key_date_prefixes_within_range:
                 # Initialize list to store all keys that might contain
                 # data for the current device and chosen dates
                 candidate_keys = []
 
                 pages = paginator.paginate(
                             Bucket=self._S3_BUCKET_NAME,
-                            Prefix=device_prefix + key_date_part
+                            Prefix=device_prefix + key_date_prefix
                             )
 
                 for p in pages:
@@ -252,9 +372,9 @@ class AwsDataClient(object):
                     candidate_keys += [
                             o['Key'] for o in p['Contents']
                             if o['Key'] <= device_prefix +
-                            max_end_key_date_part_full and
-                            o['Key'] >= device_prefix +
-                            start_key_date_part_lower_bound
+                            end_key_date_part_max + self._RECORDS_KEY_SUFFIX
+                            and o['Key'] >= device_prefix +
+                            start_key_date_part_min
                             ]
 
                 if not candidate_keys:
@@ -263,7 +383,8 @@ class AwsDataClient(object):
                 # Check which keys contain data before the start date
                 keys_before_start_date = [
                         k for k in candidate_keys
-                        if k <= device_prefix + max_start_key_date_part_full
+                        if k <= device_prefix + start_key_date_part_max +
+                        self._RECORDS_KEY_SUFFIX
                         ]
 
                 # If no keys contain data before start date, then no
