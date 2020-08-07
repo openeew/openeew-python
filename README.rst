@@ -14,20 +14,20 @@ OpenEEW package for Python
 .. image:: https://readthedocs.org/projects/openeew-python/badge/?version=latest
     :target: https://openeew-python.readthedocs.io/en/latest/?badge=latest
 
-The OpenEEW package for Python will contain a collection of tools for working with OpenEEW, including:
+The OpenEEW package for Python contains a collection of tools for working with OpenEEW, including:
 
-* downloading and analyzing accelerometer data
-* real-time data processing
-* detection algorithms
+* Downloading and analyzing accelerometer data
+* Real-time data processing
+* Detection algorithms
 
-Currently it provides a client to simplify downloading data held as an `AWS Public Dataset <https://registry.opendata.aws/grillo-openeew/>`_. See `here <https://github.com/grillo/openeew/tree/master/data#accessing-openeew-data-on-aws>`_ for information about how data is organized.
+Currently it provides a client to simplify downloading data held as an `AWS Public Dataset <https://registry.opendata.aws/grillo-openeew/>`_. See `here <https://github.com/openeew/openeew/tree/master/data#accessing-openeew-data-on-aws>`_ for information about how data is organized.
 
 More features will be coming soon.
 
 Some additional resources:
 
 * Package `documentation <https://openeew-python.readthedocs.io>`_
-* `OpenEEW <https://github.com/grillo/openeew>`_ GitHub repository
+* `OpenEEW <https://github.com/openeew/openeew>`_ GitHub repository
 
 Installation
 ===========
