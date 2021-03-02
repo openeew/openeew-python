@@ -17,10 +17,11 @@
 import aioboto3
 import boto3
 import asyncio
-import io
+import io,sys
 import json
 from datetime import datetime, timedelta
 from botocore import UNSIGNED
+from botocore.exceptions import ClientError as botocoreClientError
 from botocore.client import Config
 
 
@@ -510,11 +511,18 @@ class AwsDataClient(object):
         """
 
         bytes_stream = io.BytesIO()
-        self._s3_client.download_fileobj(
-                self._S3_BUCKET_NAME,
-                self._devices_key,
-                bytes_stream
-                )
+        try:
+            self._s3_client.download_fileobj(
+                    self._S3_BUCKET_NAME,
+                    self._devices_key,
+                    bytes_stream
+                    )
+        except botocoreClientError as e:
+            if e.response['Error']['Code'] == "404":
+                print("Currently there are no devices availabel in country "+self.country_code.upper())
+                sys.exit(1)
+            else:
+                raise NotImplementedError
         bytes_stream.seek(0)
         devices = [json.loads(line) for line in bytes_stream.readlines()]
         bytes_stream.close()
