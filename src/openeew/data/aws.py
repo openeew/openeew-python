@@ -426,7 +426,8 @@ class AwsDataClient(object):
         # Returns a list of lists of dicts
 
         # Set up async S3 client using same region and config as s3_client
-        async with aioboto3.client(
+        session = aioboto3.Session()
+        async with session.client(
                 's3',
                 region_name=self._s3_client.meta.region_name,
                 config=self._s3_client.meta.config
